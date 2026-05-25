@@ -62,7 +62,23 @@ public class Parser {
 
     //VP -> Verb (NP)
     private void parseVerbPhrase() {
+        if (currentToken.getType() == TokenType.VERB) {
+            consume(TokenType.VERB);
+            if(currentToken.getType() == TokenType.NOUN || currentToken.getType() == TokenType.PRONOUN) {
+                parseNounPhrase();
+            }
+        } else {
+            syntaxErrors.add(String.format("Syntax Error : Predicate verb phrase expected. Found : '%s'. ",
+                    currentToken.getLexeme()));
+        }
+    }
 
+    public List<String> getSyntaxErrors() {
+        return syntaxErrors;
+    }
+
+    public boolean hasErrors() {
+        return !syntaxErrors.isEmpty();
     }
 
 
