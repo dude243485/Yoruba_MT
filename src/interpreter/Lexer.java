@@ -1,55 +1,34 @@
-package interpreter;
-
-
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Lexer {
-    private final String[] sourceWords;
-    private final LexiconRepo dbRepo;
-    private int cursor = 0;
-    private final List<String> lexicalErrors = new ArrayList<>() ;
+    private final Lexicon lexicon;
+    private final List<String> lexicalErrors = new ArrayList<>();
 
+    public Lexer(Lexicon lexicon) {
+        this.lexicon = lexicon;
+    }
 
-    //constructor
-    public Lexer(String input, LexiconRepo repo) {
-        this.dbRepo = repo;
+    public List<Token> tokenize(String[] rawTokens) {
+        lexicalErrors.clear();
+        List<Token> tokens = new ArrayList<>();
 
-        //cleaning the white space
-        if (input == null || input.trim().isEmpty()) {
-            this.sourceWords = new String[0];
+        for (int i = 0; i < rawTokens.length; i++) {
+            String raw = rawTokens[i];
+            Optional<Token> found = lexicon.lookup(raw);
 
-        }else {
-            this.sourceWords = input.trim().split("\\s+");
+            if (found.isPresent()) {
+                tokens.add(found.get());
+            } else {
+                // ErrorReporter feeds from this — Akinwonmi 2024
+                tokens.add(new Token(raw, TokenType.UNKNOWN, "?"));
+                lexicalErrors.add(
+                        "LEXICAL ERROR at position " + (i + 1) +
+                                ": unrecognized token '" + raw + "'"
+                );
+            }
         }
+        return tokens;
     }
 
-    /**
-     * Generates the next sequential token in the text stream
-     */
-    public Token nextToken() {
-        if (cursor >= sourceWords.length) {
-            return new Token(TokenType.EOF, "");
-        }
-
-        String currentWord = sourceWords[cursor++];
-        TokenType resolvedType = dbRepo.lookupWord(currentWord);
-
-        //out-of-vocabulary verification check
-        if (resolvedType == null) {
-            lexicalErrors.add(String.format("Lexical Error [OOV]: The word '%s' is not registered in the database.", currentWord));
-            return new Token(TokenType.UNKNOWN, currentWord);
-        }
-
-        return new Token(resolvedType, currentWord);
-    }
-
-    public List<String> getLexicalErrors() {
-        return lexicalErrors;
-    }
-
-    public boolean hasErrors() {
-        return !lexicalErrors.isEmpty();
-    }
-
+    public List<String> getLexicalErrors() { return lexicalErrors; }
 }

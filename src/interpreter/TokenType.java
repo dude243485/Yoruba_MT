@@ -5,7 +5,10 @@ public enum TokenType {
     NOUN,
     VERB,
     ADJECTIVE,
+    DETERMINER,
+    PARTICLE,
+    ADVERB,
     CONJUNCTION,
     EOF, //End of file
-    UNKNOWN
+    UNKNOWN,
 }

@@ -1,50 +1,49 @@
-package interpreter;
+public class YorubaLexicon extends Lexicon {
+    public YorubaLexicon() {
+        // NOUNS — Abiola et al. Table 1 examples
+        add("ọmọ",     TokenType.NOUN,       "ọ-mọ");
+        add("ọkùnrin", TokenType.NOUN,       "ọ-kùn-rin");
+        add("ìyá",     TokenType.NOUN,       "ì-yá");
+        add("bàbá",    TokenType.NOUN,       "bà-bá");
+        add("ilé",     TokenType.NOUN,       "i-lé");
+        add("eran",    TokenType.NOUN,       "e-ran");
+        add("omi",     TokenType.NOUN,       "o-mi");
+        add("tabili",  TokenType.NOUN,       "ta-bi-li");
+        add("kìnún",   TokenType.NOUN,       "kì-nún");
+        add("aso",     TokenType.NOUN,       "a-so");
 
-import java.util.HashMap ;
-import java.util.Map ;
+        // VERBS — Ayoade & Eludiora corpus
+        add("pa",      TokenType.VERB,       "pa");
+        add("jẹ",      TokenType.VERB,       "jẹ");
+        add("lo",      TokenType.VERB,       "lo");
+        add("rí",      TokenType.VERB,       "rí");
+        add("fò",      TokenType.VERB,       "fò");
+        add("jókò",    TokenType.VERB,       "jó-kò");
+        add("sè",      TokenType.VERB,       "sè");
+        add("fún",     TokenType.VERB,       "fún");
+        add("wà",      TokenType.VERB,       "wà");
 
-public class LexiconRepo {
-    //simulating a database cache map loaded from an external POS database
+        // ADJECTIVES — Abiola et al. Table 1
+        add("kékeré",  TokenType.ADJECTIVE,  "ké-ke-ré");
+        add("nlá",     TokenType.ADJECTIVE,  "n-lá");
+        add("tútù",    TokenType.ADJECTIVE,  "tú-tù");
+        add("gbígbóná", TokenType.ADJECTIVE, "gbíg-bó-ná");
+        add("dúdú",    TokenType.ADJECTIVE,  "dú-dú");
 
-    private final Map<String, TokenType> dbMock = new HashMap<>();
+        // DETERMINERS — Abiola et al. R1/R2 rules
+        add("náà",     TokenType.DETERMINER, "náà");
+        add("kan",     TokenType.DETERMINER, "kan");
 
-    public LexiconRepo () {
-        seedDatabase();
-    }
+        // PRONOUNS
+        add("mo",      TokenType.PRONOUN,    "mo");
+        add("o",       TokenType.PRONOUN,    "o");
+        add("a",       TokenType.PRONOUN,    "a");
+        add("ó",       TokenType.PRONOUN,    "ó");
 
-    /**
-     * Look up a word from the external database resource.
-     * @param word the input word string with diacritics
-     * @return the identified TokenType or null if Out-of-vocabulary (OOV)
-     */
-    public TokenType lookupWord(String word) {
-        return dbMock.get(word);
-    }
-
-    private void seedDatabase() {
-        //pronouns
-        dbMock.put("mo", TokenType.PRONOUN);
-        dbMock.put("o", TokenType.PRONOUN);
-        dbMock.put("a", TokenType.PRONOUN);
-        dbMock.put("won", TokenType.PRONOUN);
-
-        //nouns
-        dbMock.put("Olu", TokenType.NOUN);
-        dbMock.put("Ade", TokenType.NOUN);
-        dbMock.put("isu", TokenType.NOUN);
-        dbMock.put("ile", TokenType.NOUN);
-        dbMock.put("eja", TokenType.NOUN);
-
-        //verbs
-        dbMock.put("je", TokenType.VERB);
-        dbMock.put("ra", TokenType.VERB);
-        dbMock.put("lo", TokenType.VERB);
-        dbMock.put("wa", TokenType.VERB);
-
-        //Adjectives
-        dbMock.put("pupa", TokenType.ADJECTIVE);
-        dbMock.put("dudu", TokenType.ADJECTIVE);
-        dbMock.put("rere", TokenType.ADJECTIVE);
-
+        // PREPOSITIONS
+        add("sí",      TokenType.PREPOSITION,"sí");
+        add("lórí",    TokenType.PREPOSITION,"ló-rí");
+        add("nínú",    TokenType.PREPOSITION,"ní-nú");
+        add("fún",     TokenType.PREPOSITION,"fún");
     }
 }

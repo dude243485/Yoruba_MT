@@ -1,85 +1,96 @@
-package interpreter;
-
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Parser {
-    private final Lexer lexer;
-    private Token currentToken;
+    private final List<Token> tokens;
+    private int pos = 0;
     private final List<String> syntaxErrors = new ArrayList<>();
 
-    public Parser(Lexer  lexer){
-        this.lexer = lexer;
-
-        //grab the first token
-        this.currentToken = lexer.nextToken();
+    public Parser(List<Token> tokens) {
+        this.tokens = tokens;
     }
 
-    private void consume(TokenType expectedType) {
-        if (currentToken.getType() == expectedType){
-            currentToken = lexer.nextToken();
-        } else {
-            syntaxErrors.add(String.format("Syntax Error: Expected components of type [%s] but hit unexpected lexeme '%s'.",
-                    expectedType, currentToken.getLexeme()));
-        }
-    }
+    // Entry point — S → NP VP
+    public boolean parse() {
+        pos = 0;
+        syntaxErrors.clear();
 
-    /**
-     * Entry point for grammar parsing*/
-    public void parseSentence() {
-        //don't parse if word is not known
-        if (currentToken.getType() == TokenType.UNKNOWN){
-            syntaxErrors.add("Syntax Parsing aborted due to preceding OOV token errors");
-            return;
+        if (tokens.isEmpty()) {
+            syntaxErrors.add("SYNTAX ERROR: Empty input.");
+            return false;
         }
 
-        parseNounPhrase();
-        parseVerbPhrase();
-
-        if (currentToken.getType() != TokenType.EOF) {
-            syntaxErrors.add(String.format("Syntax Error: Ending dangling tokens discovered after structural sentence completion: '%s'.",
-                    currentToken.getLexeme()));
+        // Skip unknown tokens (already flagged as lexical errors)
+        if (currentIs(TokenType.UNKNOWN)) {
+            pos++;
         }
-    }
 
-    //NP -> Pronoun | Noun (Adjective) ?
-    private void parseNounPhrase() {
-        if (currentToken.getType() == TokenType.PRONOUN){
-            consume(TokenType.PRONOUN);
-        } else if (currentToken.getType() == TokenType.NOUN){
-            consume(TokenType.NOUN);
-
-            if (currentToken.getType() == TokenType.ADJECTIVE){
-                consume(TokenType.ADJECTIVE);
-            }
-        } else {
-            syntaxErrors.add(String.format("Syntax Error: Structural Noun Phrase cannot begin with '%s'",
-                    currentToken.getLexeme()));
-            currentToken = lexer.nextToken();
+        boolean valid = parseS();
+        if (pos < tokens.size()) {
+            syntaxErrors.add("SYNTAX ERROR: Unexpected token '" +
+                    tokens.get(pos).getValue() + "' at position " + (pos + 1));
+            return false;
         }
+        return valid;
     }
 
+    // S → NP VP
+    private boolean parseS() {
+        int savedPos = pos;
+        if (parseNP() && parseVP()) return true;
+        pos = savedPos;
+        syntaxErrors.add("SYNTAX ERROR: Expected [Subject + Verb phrase]. " +
+                "Got: " + describeRemaining());
+        return false;
+    }
 
-    //VP -> Verb (NP)
-    private void parseVerbPhrase() {
-        if (currentToken.getType() == TokenType.VERB) {
-            consume(TokenType.VERB);
-            if(currentToken.getType() == TokenType.NOUN || currentToken.getType() == TokenType.PRONOUN) {
-                parseNounPhrase();
-            }
-        } else {
-            syntaxErrors.add(String.format("Syntax Error : Predicate verb phrase expected. Found : '%s'. ",
-                    currentToken.getLexeme()));
+    // NP → PRONOUN | NOUN (ADJECTIVE)? (DETERMINER)?
+    // Abiola et al. R1–R6, R16–R20
+    private boolean parseNP() {
+        if (match(TokenType.PRONOUN)) return true;
+        if (match(TokenType.NOUN)) {
+            match(TokenType.ADJECTIVE);   // optional
+            match(TokenType.ADJECTIVE);   // double adj — R5, R6
+            match(TokenType.DETERMINER);  // optional
+            return true;
         }
+        return false;
     }
 
-    public List<String> getSyntaxErrors() {
-        return syntaxErrors;
+    // VP → VERB (NP)? (PP)?
+    // Ayoade & Eludiora: VP → V | V NP | V NP PP
+    private boolean parseVP() {
+        if (!match(TokenType.VERB)) return false;
+        int savedPos = pos;
+        if (!parseNP()) pos = savedPos;  // NP is optional
+        int savedPos2 = pos;
+        if (!parsePP()) pos = savedPos2; // PP is optional
+        return true;
     }
 
-    public boolean hasErrors() {
-        return !syntaxErrors.isEmpty();
+    // PP → PREPOSITION NP
+    private boolean parsePP() {
+        int savedPos = pos;
+        if (match(TokenType.PREPOSITION) && parseNP()) return true;
+        pos = savedPos;
+        return false;
     }
 
+    private boolean match(TokenType type) {
+        if (pos < tokens.size() && tokens.get(pos).getType() == type) {
+            pos++;
+            return true;
+        }
+        return false;
+    }
 
+    private boolean currentIs(TokenType type) {
+        return pos < tokens.size() && tokens.get(pos).getType() == type;
+    }
+
+    private String describeRemaining() {
+        if (pos >= tokens.size()) return "end of input";
+        return "'" + tokens.get(pos).getValue() + "' (" + tokens.get(pos).getType() + ")";
+    }
+
+    public List<String> getSyntaxErrors() { return syntaxErrors; }
 }
