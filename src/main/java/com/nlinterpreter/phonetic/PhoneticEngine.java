@@ -9,12 +9,6 @@ import com.nlinterpreter.model.Token;
  * (e.g. "ọ-kùn-rin|okũrin"), set by JsonLexiconLoader.
  * This class splits that string and additionally derives the
  * Yoruba tone pattern from the token value's diacritics.
- *
- * Tone detection (MENYO-20k / Adelani et al.):
- *   H (high tone)  → á é í ó ú ẹ́ ọ́  (acute accent)
- *   L (low tone)   → à è ì ò ù ẹ̀ ọ̀  (grave accent)
- *   M (mid tone)   → a e i o u ẹ ọ    (no tone mark)
- *
  * For UNKNOWN tokens (phonetic = "?"), a graceful fallback is returned.
  *
  * Akinwonmi 2024: The DRSA syllabification data is already stored in
