@@ -27,12 +27,7 @@ import java.util.Scanner;
  *   7. Phonetics     — PhoneticEngine formats each token's reading
  *   8. Error report  — ErrorReporter aggregates lexical + syntax errors
  *
- * References:
- *   Abiola et al. 2014  — NP CFG rules (head-initial ordering)
- *   Ayoade & Eludiora 2020 — VP CFG rules
- *   Adelani et al.      — MENYO-20k diacritic-complete lexicon
- *   Dione et al. 2023   — MasakhaPOS POS tag set for Yoruba
- *   Akinwonmi 2024      — DRSA phonetic/syllabification design
+
  */
 public class Main {
 
@@ -55,77 +50,100 @@ public class Main {
             return; // unreachable; satisfies compiler
         }
 
-        // ── 2. Read input ─────────────────────────────────────────────────────
-        Scanner sc = new Scanner(System.in, StandardCharsets.UTF_8);
+        // ── 2. Read input (loop) ──────────────────────────────────────────────
+        Scanner       sc     = new Scanner(System.in, StandardCharsets.UTF_8);
+        Lexer         lexer  = new Lexer(lexicon);
+        PhoneticEngine engine = new PhoneticEngine();
 
         System.out.println();
         System.out.println("============================================");
         System.out.println("  Yoruba Natural Language Interpreter");
+        System.out.println("  Type 'exit' or press Ctrl+Z to quit.");
         System.out.println("============================================");
-        System.out.print("Enter a Yoruba sentence: ");
-        String input = sc.nextLine().trim();
 
-        if (input.isEmpty()) {
-            System.out.println("No input provided. Exiting.");
-            return;
-        }
+        while (true) {
 
-        // ── 3. Tokenize (split on whitespace) ────────────────────────────────
-        String[] rawTokens = input.split("\\s+");
+            // Prompt
+            System.out.println();
+            System.out.print("Enter a Yoruba sentence: ");
 
-        // ── 4. Lex ────────────────────────────────────────────────────────────
-        Lexer       lexer  = new Lexer(lexicon);
-        List<Token> tokens = lexer.tokenize(rawTokens);
-
-        // ── 5. Print Lexical Analysis Table ──────────────────────────────────
-        System.out.println();
-        System.out.println("=== LEXICAL ANALYSIS ===");
-        System.out.printf("%-18s %-15s %-22s %-22s%n",
-                "TOKEN", "POS", "SYLLABLES", "PRONUNCIATION");
-        System.out.println("-".repeat(79));
-
-        PhoneticEngine engine = new PhoneticEngine();
-
-        for (Token t : tokens) {
-            String phonetic   = t.getPhonetic();
-            String syllables  = "?";
-            String ipa        = "?";
-
-            if (!"?".equals(phonetic)) {
-                String[] parts = phonetic.split("\\|", 2);
-                syllables = parts[0].trim();
-                ipa       = parts.length > 1 ? parts[1].trim() : syllables;
+            // EOF (Ctrl+Z on Windows)
+            if (!sc.hasNextLine()) {
+                System.out.println("\nGoodbye!");
+                break;
             }
 
+            String input = sc.nextLine().trim();
+
+            // Exit keyword
+            if (input.equalsIgnoreCase("exit")) {
+                System.out.println("Goodbye!");
+                break;
+            }
+
+            // Empty input — re-prompt without running the pipeline
+            if (input.isEmpty()) {
+                System.out.println("Please enter a sentence.");
+                continue;
+            }
+
+            // ── 3. Tokenize (split on whitespace) ────────────────────────────
+            String[] rawTokens = input.split("\\s+");
+
+            // ── 4. Lex ───────────────────────────────────────────────────────
+            List<Token> tokens = lexer.tokenize(rawTokens);
+
+            // ── 5. Print Lexical Analysis Table ──────────────────────────────
+            System.out.println();
+            System.out.println("=== LEXICAL ANALYSIS ===");
             System.out.printf("%-18s %-15s %-22s %-22s%n",
-                    t.getValue(), t.getType(), syllables, ipa);
-        }
+                    "TOKEN", "POS", "SYLLABLES", "PRONUNCIATION");
+            System.out.println("-".repeat(79));
 
-        // ── 6. Parse — Syntax Validation ─────────────────────────────────────
-        Parser  parser = new Parser(tokens);
-        boolean valid  = parser.parse();
+            for (Token t : tokens) {
+                String phonetic  = t.getPhonetic();
+                String syllables = "?";
+                String ipa       = "?";
 
-        System.out.println();
-        System.out.println("=== SYNTAX VALIDATION ===");
-        if (valid) {
-            System.out.println("Valid sentence structure [NP VP]");
-        } else {
-            System.out.println("Invalid sentence structure.");
-            parser.getSyntaxErrors().forEach(e -> System.out.println("  " + e));
-        }
+                if (!"?".equals(phonetic)) {
+                    String[] parts = phonetic.split("\\|", 2);
+                    syllables = parts[0].trim();
+                    ipa       = parts.length > 1 ? parts[1].trim() : syllables;
+                }
 
-        // ── 7. Phonetic Reading ───────────────────────────────────────────────
-        System.out.println();
-        System.out.println("=== PHONETIC READING ===");
-        for (Token t : tokens) {
-            System.out.printf("%-18s -> %s%n",
-                    t.getValue(), engine.getPhoneticReading(t));
-        }
+                System.out.printf("%-18s %-15s %-22s %-22s%n",
+                        t.getValue(), t.getType(), syllables, ipa);
+            }
 
-        // ── 8. Error Report ───────────────────────────────────────────────────
-        ErrorReporter reporter = new ErrorReporter();
-        lexer.getLexicalErrors().forEach(reporter::addError);
-        parser.getSyntaxErrors().forEach(reporter::addError);
-        reporter.report();
+            // ── 6. Parse — Syntax Validation ─────────────────────────────────
+            Parser  parser = new Parser(tokens);
+            boolean valid  = parser.parse();
+
+            System.out.println();
+            System.out.println("=== SYNTAX VALIDATION ===");
+            if (valid) {
+                System.out.println("Valid sentence structure [NP VP]");
+            } else {
+                System.out.println("Invalid sentence structure.");
+                parser.getSyntaxErrors().forEach(e -> System.out.println("  " + e));
+            }
+
+            // ── 7. Phonetic Reading ───────────────────────────────────────────
+            System.out.println();
+            System.out.println("=== PHONETIC READING ===");
+            for (Token t : tokens) {
+                System.out.printf("%-18s -> %s%n",
+                        t.getValue(), engine.getPhoneticReading(t));
+            }
+
+            // ── 8. Error Report ───────────────────────────────────────────────
+            ErrorReporter reporter = new ErrorReporter();
+            lexer.getLexicalErrors().forEach(reporter::addError);
+            parser.getSyntaxErrors().forEach(reporter::addError);
+            reporter.report();
+
+        } // end while
+
+        sc.close();
     }
 }
